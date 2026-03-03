@@ -3,14 +3,11 @@ import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion'
 import { 
   Terminal, 
   Code2, 
-  Cpu, 
-  Database, 
   Shield, 
   ChevronDown, 
   Github, 
   Linkedin, 
   Mail, 
-  Phone,
   Layers,
   Zap,
   Bot,
@@ -19,7 +16,7 @@ import {
   Archive
 } from 'lucide-react';
 
-// --- DATA: Based on User Resume ---
+// --- DATA ---
 
 const RESUME = {
   header: {
@@ -92,21 +89,136 @@ const RESUME = {
   ]
 };
 
+// --- IMAGES ---
+// Setup for local PNGs with SVG Base64 fallbacks for the Canvas preview
+
+const VILLAIN_ASSETS = [
+  {
+    // Joker
+    src: 'villain1.png', // Assume this is hosted locally in the public folder
+    fallback: `data:image/svg+xml;base64,${btoa(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><g transform="translate(0, 10)"><path d="M25,50 C25,25 75,25 75,50 C75,75 25,75 25,50" fill="#f8f9fa"/><path d="M15,40 C15,15 85,15 85,40 C85,60 65,35 50,35 C35,35 15,60 15,40 Z" fill="#22c55e"/><circle cx="35" cy="45" r="5" fill="#1e1b4b"/><circle cx="65" cy="45" r="5" fill="#1e1b4b"/><path d="M35,65 Q50,80 65,65" stroke="#ef4444" stroke-width="5" stroke-linecap="round" fill="none"/></g></svg>`)}`
+  },
+  {
+    // Harley Quinn
+    src: 'villain2.png', // Assume this is hosted locally in the public folder
+    fallback: `data:image/svg+xml;base64,${btoa(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><g transform="translate(0, 10)"><path d="M25,50 C25,25 75,25 75,50 C75,75 25,75 25,50" fill="#f8f9fa"/><path d="M25,50 C25,20 50,20 50,50 Z" fill="#ef4444"/><path d="M75,50 C75,20 50,20 50,50 Z" fill="#111"/><path d="M25,45 Q50,45 75,45" stroke="#111" stroke-width="12" stroke-linecap="round"/><circle cx="35" cy="45" r="3" fill="#fff"/><circle cx="65" cy="45" r="3" fill="#fff"/><path d="M40,65 Q50,75 60,65" stroke="#111" stroke-width="4" stroke-linecap="round" fill="none"/><circle cx="20" cy="20" r="5" fill="#fff"/><circle cx="80" cy="20" r="5" fill="#fff"/></g></svg>`)}`
+  },
+  {
+    // Penguin
+    src: 'villain3.png', // Assume this is hosted locally in the public folder
+    fallback: `data:image/svg+xml;base64,${btoa(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><g transform="translate(0, 10)"><path d="M20,60 C20,30 80,30 80,60 C80,90 20,90 20,60" fill="#fcd34d"/><rect x="30" y="5" width="40" height="30" fill="#1f2937"/><rect x="20" y="30" width="60" height="5" fill="#1f2937"/><circle cx="35" cy="50" r="5" fill="#000"/><circle cx="65" cy="50" r="10" fill="none" stroke="#fff" stroke-width="3"/><circle cx="65" cy="50" r="4" fill="#000"/><path d="M50,55 L45,70 L55,70 Z" fill="#f97316"/></g></svg>`)}`
+  },
+  {
+    // Two-Face
+    src: 'villain4.png', // Assume this is hosted locally in the public folder
+    fallback: `data:image/svg+xml;base64,${btoa(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><g transform="translate(0, 10)"><path d="M25,50 C25,25 50,25 50,50 C50,75 25,75 25,50" fill="#f8f9fa"/><path d="M75,50 C75,25 50,25 50,50 C50,75 75,75 75,50" fill="#3b82f6"/><circle cx="35" cy="45" r="5" fill="#000"/><circle cx="65" cy="45" r="5" fill="#facc15"/><path d="M35,65 Q50,75 65,65" stroke="#000" stroke-width="4" stroke-linecap="round" fill="none"/><path d="M50,65 Q60,60 65,65" stroke="#ef4444" stroke-width="4" stroke-linecap="round" fill="none"/></g></svg>`)}`
+  },
+  {
+    // Riddler
+    src: 'villain5.png', // Assume this is hosted locally in the public folder
+    fallback: `data:image/svg+xml;base64,${btoa(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><g transform="translate(0, 10)"><path d="M25,50 C25,25 75,25 75,50 C75,75 25,75 25,50" fill="#fca5a5"/><path d="M20,35 C20,10 80,10 80,35 Z" fill="#22c55e"/><rect x="15" y="30" width="70" height="5" fill="#166534"/><circle cx="35" cy="55" r="5" fill="#000"/><circle cx="65" cy="55" r="5" fill="#000"/><text x="50" y="28" font-family="monospace" font-weight="bold" font-size="22" fill="#000" text-anchor="middle">?</text><path d="M40,70 Q50,80 60,70" stroke="#000" stroke-width="4" stroke-linecap="round" fill="none"/></g></svg>`)}`
+  }
+];
+
+// --- AUDIO & EFFECTS COMPONENTS ---
+
+// Synthesize a retro victory chime natively without needing external assets
+const playVictorySound = () => {
+  try {
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContext) return;
+    const ctx = new AudioContext();
+    
+    const playNote = (freq, startTime, duration, type = 'triangle') => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = type;
+      osc.frequency.setValueAtTime(freq, ctx.currentTime + startTime);
+      
+      gain.gain.setValueAtTime(0.1, ctx.currentTime + startTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + startTime + duration);
+      
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(ctx.currentTime + startTime);
+      osc.stop(ctx.currentTime + startTime + duration);
+    };
+
+    // Heroic fanfare sequence (C Major Arpeggio)
+    playNote(261.63, 0, 0.15);    // C4
+    playNote(329.63, 0.15, 0.15); // E4
+    playNote(392.00, 0.3, 0.15);  // G4
+    playNote(523.25, 0.45, 0.8);  // C5 (Held longer for triumph)
+  } catch (e) {
+    console.error("Audio playback failed", e);
+  }
+};
+
+const Confetti = () => {
+  const colors = ['#ef4444', '#facc15', '#3b82f6', '#22c55e', '#a855f7', '#ffffff'];
+  // Generate 75 pieces of colorful paper
+  const pieces = Array.from({ length: 75 }).map((_, i) => ({
+    id: i,
+    x: Math.random() * 100, 
+    delay: Math.random() * 2, 
+    duration: 2 + Math.random() * 3, 
+    color: colors[Math.floor(Math.random() * colors.length)],
+    size: 6 + Math.random() * 8, 
+    rotate: Math.random() * 360
+  }));
+
+  return (
+    <motion.div 
+      initial={{ opacity: 0 }} 
+      animate={{ opacity: 1 }} 
+      exit={{ opacity: 0 }} 
+      className="fixed inset-0 pointer-events-none z-[100] overflow-hidden flex items-center justify-center"
+    >
+      {/* Falling Paper Particles */}
+      {pieces.map(p => (
+        <motion.div
+          key={p.id}
+          initial={{ y: '-60vh', x: `${p.x}vw`, rotate: p.rotate }}
+          animate={{ y: '60vh', x: `${p.x - 5 + Math.random() * 10}vw`, rotate: p.rotate + 360 + Math.random() * 360 }}
+          transition={{ duration: p.duration, delay: p.delay, ease: "linear", repeat: Infinity }}
+          style={{
+            position: 'absolute',
+            top: '50%', // use center origin for seamless screen-crossing
+            left: 0,
+            width: p.size,
+            height: p.size * 0.6,
+            backgroundColor: p.color,
+            borderRadius: Math.random() > 0.5 ? '50%' : '2px'
+          }}
+        />
+      ))}
+      
+      {/* Central Success Banner */}
+      <motion.div 
+         initial={{ scale: 0.5, opacity: 0 }}
+         animate={{ scale: 1, opacity: 1 }}
+         transition={{ type: "spring", stiffness: 200, damping: 15 }}
+         className="relative z-10 text-center bg-black/80 px-8 py-10 md:px-12 md:py-8 border-2 border-yellow-500/50 rounded-xl backdrop-blur-md shadow-[0_0_50px_rgba(234,179,8,0.2)]"
+      >
+         <h1 className="text-4xl md:text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-yellow-600 drop-shadow-[0_0_20px_rgba(234,179,8,0.8)] font-mono tracking-widest uppercase mb-4">
+           GOTHAM SECURED
+         </h1>
+         <p className="text-slate-300 font-mono text-sm tracking-widest uppercase border-t border-slate-700 pt-4">
+           All rogues neutralized.<br/>Scanning for new threats...
+         </p>
+      </motion.div>
+    </motion.div>
+  );
+};
+
 // --- COMPONENTS ---
 
-// 1. The Batarang SVG Component
 const Batarang = ({ className, color = "currentColor" }) => (
-  <svg 
-    viewBox="0 0 100 60" 
-    className={className} 
-    fill={color}
-    style={{ filter: `drop-shadow(0 0 10px ${color})` }}
-  >
+  <svg viewBox="0 0 100 60" className={className} fill={color} style={{ filter: `drop-shadow(0 0 10px ${color})` }}>
     <path d="M50 45 C 65 55, 90 50, 100 20 C 85 25, 70 20, 60 10 L 50 0 L 40 10 C 30 20, 15 25, 0 20 C 10 50, 35 55, 50 45 Z" />
   </svg>
 );
 
-// 2. Glitch Text Effect
 const GlitchText = ({ text }) => {
   return (
     <div className="relative inline-block group">
@@ -121,11 +233,9 @@ const GlitchText = ({ text }) => {
   );
 };
 
-// 3. Section Component with "Tech" Borders
 const TechSection = ({ title, children, id, icon: Icon }) => {
   return (
-    <div id={id} className="relative py-16 md:py-24 px-4 max-w-6xl mx-auto">
-      {/* Corner Markers */}
+    <div id={id} className="relative py-16 md:py-24 px-4 max-w-6xl mx-auto z-10">
       <div className="absolute top-0 left-0 w-8 h-8 border-t-2 border-l-2 border-yellow-500/50" />
       <div className="absolute top-0 right-0 w-8 h-8 border-t-2 border-r-2 border-yellow-500/50" />
       <div className="absolute bottom-0 left-0 w-8 h-8 border-b-2 border-l-2 border-yellow-500/50" />
@@ -146,45 +256,25 @@ const TechSection = ({ title, children, id, icon: Icon }) => {
   );
 };
 
-// 4. Interactive Hero Character (Neon Blood & Batarang Hit)
 const InteractiveChar = ({ char, isGradient }) => {
   const [hitInfo, setHitInfo] = useState({ hit: false, angle: 0 });
 
   const handleHover = () => {
-    if (hitInfo.hit) return; // Prevent spamming
-    // Generate a random angle for the Batarang attack (0 to 360 degrees)
+    if (hitInfo.hit) return; 
     setHitInfo({ hit: true, angle: Math.random() * Math.PI * 2 });
-    // Reset state after animation finishes
     setTimeout(() => setHitInfo({ hit: false, angle: 0 }), 800);
   };
 
-  // Calculate knockback direction away from the incoming batarang
   const knockX = hitInfo.hit ? Math.cos(hitInfo.angle) * 15 : 0;
   const knockY = hitInfo.hit ? Math.sin(hitInfo.angle) * 15 : 0;
   const rot = hitInfo.hit ? (Math.random() > 0.5 ? 20 : -20) : 0;
 
   return (
-    <span 
-      className="relative inline-block cursor-crosshair hover:z-50" 
-      onMouseEnter={handleHover}
-    >
-      {/* 1. The Incoming Batarang Projectile */}
+    <span className="relative inline-block cursor-crosshair hover:z-50" onMouseEnter={handleHover}>
       {hitInfo.hit && (
         <motion.div
-          initial={{ 
-            x: Math.cos(hitInfo.angle) * 200, 
-            y: Math.sin(hitInfo.angle) * 200, 
-            opacity: 0, 
-            scale: 2,
-            rotate: 0 
-          }}
-          animate={{ 
-            x: 0, 
-            y: 0, 
-            opacity: [0, 1, 1, 0], // fades in, hits, disappears instantly
-            scale: 1,
-            rotate: 720 
-          }}
+          initial={{ x: Math.cos(hitInfo.angle) * 200, y: Math.sin(hitInfo.angle) * 200, opacity: 0, scale: 2, rotate: 0 }}
+          animate={{ x: 0, y: 0, opacity: [0, 1, 1, 0], scale: 1, rotate: 720 }}
           transition={{ duration: 0.15, ease: "easeIn" }}
           className="absolute top-1/2 left-1/2 w-8 h-8 -translate-x-1/2 -translate-y-1/2 pointer-events-none z-20 text-slate-300"
         >
@@ -192,24 +282,19 @@ const InteractiveChar = ({ char, isGradient }) => {
         </motion.div>
       )}
 
-      {/* 2. Neon Blood Shed / Spark Splatter */}
       {hitInfo.hit && (
          <div className="absolute top-1/2 left-1/2 pointer-events-none z-0">
            {Array.from({length: 12}).map((_, i) => {
              const pAngle = Math.random() * Math.PI * 2;
              const pDist = 40 + Math.random() * 80;
-             const isBlood = Math.random() > 0.4; // More blood (red) than sparks (yellow)
+             const isBlood = Math.random() > 0.4;
              return (
                <motion.div
                  key={i}
                  initial={{ x: 0, y: 0, opacity: 1, scale: 0 }}
                  animate={{ x: Math.cos(pAngle)*pDist, y: Math.sin(pAngle)*pDist, opacity: 0, scale: 1 }}
-                 transition={{ duration: 0.5, ease: "easeOut", delay: 0.15 }} // Explode exactly when hit
-                 className={`absolute rounded-full ${
-                   isBlood 
-                    ? 'bg-red-500 shadow-[0_0_15px_#ef4444] w-2 h-2' 
-                    : 'bg-yellow-400 shadow-[0_0_12px_#facc15] w-1.5 h-1.5'
-                 }`}
+                 transition={{ duration: 0.5, ease: "easeOut", delay: 0.15 }}
+                 className={`absolute rounded-full ${isBlood ? 'bg-red-500 shadow-[0_0_15px_#ef4444] w-2 h-2' : 'bg-yellow-400 shadow-[0_0_12px_#facc15] w-1.5 h-1.5'}`}
                  style={{ marginLeft: '-4px', marginTop: '-4px' }}
                />
              )
@@ -217,29 +302,125 @@ const InteractiveChar = ({ char, isGradient }) => {
          </div>
       )}
 
-      {/* 3. The Letter (Reacts to the hit) */}
       <motion.span
         animate={{ 
-          x: knockX, 
-          y: knockY, 
-          rotate: rot,
-          scale: hitInfo.hit ? 0.8 : 1,
-          filter: hitInfo.hit 
-            ? "brightness(2) drop-shadow(0 0 15px rgba(239, 68, 68, 0.9))" 
-            : "brightness(1) drop-shadow(0 0 0px rgba(0,0,0,0))"
+          x: knockX, y: knockY, rotate: rot, scale: hitInfo.hit ? 0.8 : 1,
+          filter: hitInfo.hit ? "brightness(2) drop-shadow(0 0 15px rgba(239, 68, 68, 0.9))" : "brightness(1) drop-shadow(0 0 0px rgba(0,0,0,0))"
         }}
         transition={{ type: "spring", stiffness: 400, damping: 12, delay: hitInfo.hit ? 0.15 : 0 }} 
         className={`relative z-10 inline-block transition-colors duration-200 ${
-          hitInfo.hit 
-            ? 'text-red-400 bg-none drop-shadow-[0_0_10px_#ef4444]' // Turn red on hit
-            : isGradient 
-              ? 'text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-yellow-600 drop-shadow-[0_0_15px_rgba(234,179,8,0.5)]' 
-              : 'text-white'
+          hitInfo.hit ? 'text-red-400 bg-none drop-shadow-[0_0_10px_#ef4444]' : isGradient ? 'text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-yellow-600 drop-shadow-[0_0_15px_rgba(234,179,8,0.5)]' : 'text-white'
         }`}
       >
         {char}
       </motion.span>
     </span>
+  );
+};
+
+// Interactive Villain Component
+const Villain = ({ imageObj, initialPos, onDestroy }) => {
+  const [hitInfo, setHitInfo] = useState({ hit: false, angle: 0 });
+  const [destroyed, setDestroyed] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
+
+  const handleHover = () => {
+    setIsHovered(true);
+  };
+
+  const handleClick = () => {
+    if (hitInfo.hit || destroyed) return; 
+    
+    // Attack angle
+    const angle = Math.random() * Math.PI * 2;
+    setHitInfo({ hit: true, angle });
+    
+    // Sequence: Hit -> Pause -> Explode/Destroy
+    setTimeout(() => {
+        setDestroyed(true);
+        setTimeout(() => {
+           onDestroy(); // Notify parent to remove from DOM completely
+        }, 500); // Wait for explosion animation to finish
+    }, 400);
+  };
+
+  if (destroyed) {
+    // Show explosion instead of character
+    return (
+       <div className="absolute pointer-events-none z-0" style={{ top: initialPos.top, left: initialPos.left }}>
+         {Array.from({length: 20}).map((_, i) => {
+           const pAngle = Math.random() * Math.PI * 2;
+           const pDist = 60 + Math.random() * 100;
+           const isBlood = Math.random() > 0.3;
+           return (
+             <motion.div
+               key={i}
+               initial={{ x: 0, y: 0, opacity: 1, scale: 0 }}
+               animate={{ x: Math.cos(pAngle)*pDist, y: Math.sin(pAngle)*pDist, opacity: 0, scale: Math.random() * 2 + 1 }}
+               transition={{ duration: 0.6, ease: "easeOut" }}
+               className={`absolute rounded-full ${isBlood ? 'bg-red-500 shadow-[0_0_20px_#ef4444]' : 'bg-yellow-400 shadow-[0_0_15px_#facc15]'}`}
+               style={{ width: '6px', height: '6px', marginLeft: '-3px', marginTop: '-3px' }}
+             />
+           )
+         })}
+         <motion.div 
+            initial={{ scale: 0, opacity: 1 }}
+            animate={{ scale: 2, opacity: 0 }}
+            transition={{ duration: 0.5 }}
+            className="absolute -top-10 -left-10 text-red-500 font-mono font-black text-4xl italic"
+            style={{ textShadow: '0 0 10px red' }}
+         >
+            POW!
+         </motion.div>
+       </div>
+    );
+  }
+
+  const knockX = hitInfo.hit ? Math.cos(hitInfo.angle) * 30 : 0;
+  const knockY = hitInfo.hit ? Math.sin(hitInfo.angle) * 30 : 0;
+  const rot = hitInfo.hit ? (Math.random() > 0.5 ? 45 : -45) : 0;
+
+  return (
+    <motion.div 
+      initial={{ opacity: 0, scale: 0 }}
+      animate={{ 
+          opacity: isHovered ? 1 : 0.3, // Brighten on hover
+          scale: isHovered ? 1.1 : 1,
+          filter: isHovered ? 'brightness(1.5) drop-shadow(0 0 20px rgba(234, 179, 8, 0.4))' : 'brightness(0.5) blur(2px)', // Remove blur and shadow on hover
+      }}
+      transition={{ duration: 0.3 }}
+      className="absolute cursor-crosshair z-30 transition-all duration-300"
+      style={{ top: initialPos.top, left: initialPos.left }}
+      onMouseEnter={handleHover}
+      onMouseLeave={() => setIsHovered(false)}
+      onClick={handleClick}
+    >
+      {/* Incoming Batarang */}
+      {hitInfo.hit && (
+        <motion.div
+          initial={{ x: Math.cos(hitInfo.angle) * 300, y: Math.sin(hitInfo.angle) * 300, opacity: 0, scale: 3, rotate: 0 }}
+          animate={{ x: 0, y: 0, opacity: [0, 1, 1, 0], scale: 1, rotate: 1080 }}
+          transition={{ duration: 0.2, ease: "easeIn" }}
+          className="absolute top-1/2 left-1/2 w-12 h-12 -translate-x-1/2 -translate-y-1/2 pointer-events-none z-40 text-slate-300"
+        >
+          <Batarang color="currentColor" />
+        </motion.div>
+      )}
+
+      {/* Villain Image (Uses fallback SVG if the PNG isn't hosted locally) */}
+      <motion.img 
+        src={imageObj.src} 
+        onError={(e) => { e.currentTarget.src = imageObj.fallback; }}
+        alt="Villain"
+        animate={{ 
+            x: knockX, y: knockY, rotate: rot, 
+            scale: hitInfo.hit ? 0.8 : 1,
+            filter: hitInfo.hit ? 'brightness(3) sepia(1) hue-rotate(-50deg) saturate(5)' : '' // Flash red on hit
+        }}
+        transition={{ type: "spring", stiffness: 300, damping: 15, delay: hitInfo.hit ? 0.2 : 0 }} 
+        className="w-24 h-24 object-contain"
+      />
+    </motion.div>
   );
 };
 
@@ -251,28 +432,71 @@ export default function Portfolio() {
   const [zoomed, setZoomed] = useState(false);
   const { scrollYProgress } = useScroll();
   const scaleX = useTransform(scrollYProgress, [0, 1], [0, 1]);
+  
+  const [villainImages, setVillainImages] = useState([]);
+  const [villains, setVillains] = useState([]);
+  const [hasWon, setHasWon] = useState(false);
+  const [gameStarted, setGameStarted] = useState(false);
+
+  // Load Villain Images on Mount
+  useEffect(() => {
+    setVillainImages(VILLAIN_ASSETS);
+  }, []);
+
+  // Spawn Villains as a "Wave" across the page once loading is done
+  useEffect(() => {
+      if (!loading && villainImages.length > 0 && villains.length === 0 && !hasWon) {
+          const spawnVillains = villainImages.map((imgObj, i) => {
+              const randomTop = Math.floor(Math.random() * 80) + 10; 
+              const randomLeft = Math.floor(Math.random() * 80) + 10; 
+              const topOffset = `calc(${i * 100}vh + ${randomTop}vh)`; 
+
+              return {
+                  id: i + Date.now(), // Generate fresh unique ID
+                  imageObj: imgObj,
+                  top: topOffset,
+                  left: `${randomLeft}%`
+              };
+          });
+          setVillains(spawnVillains);
+          setGameStarted(true); // Game/Wave is actively running
+      }
+  }, [loading, villainImages, villains.length, hasWon]);
+
+  // Check Win Condition (All villains defeated)
+  useEffect(() => {
+      if (gameStarted && villains.length === 0 && !hasWon) {
+          setHasWon(true);
+          playVictorySound();
+          
+          // Celebrate for 8 seconds, then reset and spawn a new wave
+          setTimeout(() => {
+              setHasWon(false);
+              setGameStarted(false); // Triggers the spawn effect to run again
+          }, 8000);
+      }
+  }, [villains.length, gameStarted, hasWon]);
 
   // Loading Sequence
   useEffect(() => {
-    // Phase 1: Spin
-    const spinTimer = setTimeout(() => {
-      setZoomed(true); // Trigger Zoom
-    }, 2500);
-
-    // Phase 2: Reveal Content
-    const revealTimer = setTimeout(() => {
-      setLoading(false);
-    }, 3200); // Wait for zoom animation to mostly finish
-
-    return () => {
-      clearTimeout(spinTimer);
-      clearTimeout(revealTimer);
-    };
+    const spinTimer = setTimeout(() => setZoomed(true), 2500);
+    const revealTimer = setTimeout(() => setLoading(false), 3200);
+    return () => { clearTimeout(spinTimer); clearTimeout(revealTimer); };
   }, []);
 
+  // Remove the villain specifically clicked/hit
+  const handleDestroyVillain = (idToRemove) => {
+      setVillains(prev => prev.filter(v => v.id !== idToRemove));
+  };
+
   return (
-    <div className="bg-[#050505] min-h-screen text-slate-300 font-sans selection:bg-yellow-500/30 selection:text-yellow-200 overflow-x-hidden">
+    <div className="bg-[#050505] min-h-screen text-slate-300 font-sans selection:bg-yellow-500/30 selection:text-yellow-200 overflow-x-hidden relative">
       
+      {/* --- SUCCESS STATE CONFETTI --- */}
+      <AnimatePresence>
+        {hasWon && <Confetti />}
+      </AnimatePresence>
+
       {/* --- ANIMATED LOADING SCREEN --- */}
       <AnimatePresence>
         {loading && (
@@ -283,36 +507,21 @@ export default function Portfolio() {
           >
             <motion.div
               initial={{ scale: 0.5, rotate: 0 }}
-              animate={zoomed ? { 
-                scale: 60, // Massive zoom to "breach" the screen
-                rotate: 720,
-                opacity: 0
-              } : { 
-                scale: 1,
-                rotate: 360 
-              }}
-              transition={zoomed ? {
-                duration: 0.8,
-                ease: "circIn"
-              } : {
-                duration: 2,
-                repeat: Infinity,
-                ease: "linear"
-              }}
+              animate={zoomed ? { scale: 60, rotate: 720, opacity: 0 } : { scale: 1, rotate: 360 }}
+              transition={zoomed ? { duration: 0.8, ease: "circIn" } : { duration: 2, repeat: Infinity, ease: "linear" }}
               className="relative"
             >
               <Batarang className="w-32 h-32 text-yellow-500" />
-              {/* Glow Effect */}
               <div className="absolute inset-0 bg-yellow-400 blur-xl opacity-30 animate-pulse" />
             </motion.div>
             
             {!zoomed && (
               <motion.div 
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
+                initial={{ opacity: 0 }} animate={{ opacity: 1 }}
                 className="absolute bottom-20 text-yellow-500/60 font-mono text-sm tracking-[0.3em] uppercase"
               >
                 Initializing Systems...
+                {villainImages.length > 0 && <span className="block text-xs mt-2 text-red-500">Warning: Rogue Activity Detected.</span>}
               </motion.div>
             )}
           </motion.div>
@@ -325,18 +534,25 @@ export default function Portfolio() {
           initial={{ opacity: 0 }} 
           animate={{ opacity: 1 }} 
           transition={{ duration: 1 }}
-          className="relative"
+          className="relative w-full h-full"
         >
           {/* Background Effects */}
           <div className="fixed inset-0 pointer-events-none z-0">
-             {/* Scanlines */}
             <div className="absolute inset-0 bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.25)_50%),linear-gradient(90deg,rgba(255,0,0,0.06),rgba(0,255,0,0.02),rgba(0,0,255,0.06))] z-10 bg-[length:100%_2px,3px_100%] pointer-events-none" />
-            {/* Fog/Atmosphere */}
             <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-blue-900/10 blur-[120px]" />
             <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] rounded-full bg-yellow-900/10 blur-[120px]" />
-            {/* Bat Signal Spotlight approximation */}
             <div className="absolute top-[-50%] left-1/2 -translate-x-1/2 w-[800px] h-[800px] bg-gradient-radial from-slate-800/20 to-transparent blur-3xl" />
           </div>
+
+          {/* Render Villains */}
+          {villains.map(v => (
+             <Villain 
+                key={v.id} 
+                imageObj={v.imageObj} 
+                initialPos={{ top: v.top, left: v.left }} 
+                onDestroy={() => handleDestroyVillain(v.id)} 
+             />
+          ))}
 
           {/* Progress Bar */}
           <motion.div 
@@ -361,7 +577,7 @@ export default function Portfolio() {
           </nav>
 
           {/* Hero Section */}
-          <section className="min-h-screen flex items-center justify-center relative pt-20">
+          <section className="min-h-screen flex items-center justify-center relative pt-20 z-10">
             <div className="text-center z-10 px-4 w-full">
               <motion.div 
                 initial={{ y: 20, opacity: 0 }}
@@ -372,7 +588,6 @@ export default function Portfolio() {
                 SYSTEM ONLINE // AUTHENTICATED
               </motion.div>
               
-              {/* Interactive Hero Text Container */}
               <motion.div 
                 initial={{ scale: 0.9, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
@@ -502,21 +717,17 @@ export default function Portfolio() {
                   transition={{ delay: index * 0.1 }}
                   className="relative pl-8 md:pl-0"
                 >
-                  {/* Timeline Line */}
                   <div className="absolute left-0 top-0 bottom-0 w-[2px] bg-slate-800 md:left-[180px]" />
-                  {/* Timeline Dot */}
                   <div className="absolute left-[-5px] top-6 w-3 h-3 bg-yellow-500 rounded-full shadow-[0_0_10px_#eab308] md:left-[176px]" />
 
                   <div className="md:flex gap-12 group">
-                    {/* Date Column */}
                     <div className="md:w-[180px] shrink-0 mb-2 md:mb-0">
                       <div className="font-mono text-sm text-yellow-500/80 py-1 px-2 border border-yellow-500/20 bg-yellow-500/5 inline-block rounded">
                         {job.period}
                       </div>
                     </div>
 
-                    {/* Content Column */}
-                    <div className="flex-grow p-6 bg-slate-900/40 border border-white/5 hover:border-yellow-500/30 transition-all duration-300 rounded-lg hover:bg-slate-800/40">
+                    <div className="flex-grow p-6 bg-slate-900/40 border border-white/5 hover:border-yellow-500/30 transition-all duration-300 rounded-lg hover:bg-slate-800/40 z-10">
                       <h3 className="text-xl font-bold text-white mb-1">{job.role}</h3>
                       <div className="text-blue-400 font-mono text-sm mb-4 flex items-center gap-2">
                          @{job.company} <span className="text-slate-600">|</span> {job.location}
@@ -539,7 +750,6 @@ export default function Portfolio() {
           {/* R&D Projects Section */}
           <TechSection id="projects" title="R&D_Prototypes" icon={FolderLock}>
             
-            {/* Active Projects */}
             <div className="mb-12">
               <h3 className="text-yellow-500 font-mono mb-6 flex items-center gap-2 border-b border-yellow-500/20 pb-2">
                 <Zap className="w-4 h-4" /> ACTIVE_CLASSIFIED_FILES
@@ -549,9 +759,8 @@ export default function Portfolio() {
                   <motion.div 
                     key={idx}
                     whileHover={{ y: -5 }}
-                    className="group bg-black border border-slate-800 p-1 hover:border-yellow-500/50 transition-all duration-300 relative overflow-hidden"
+                    className="group bg-black border border-slate-800 p-1 hover:border-yellow-500/50 transition-all duration-300 relative overflow-hidden z-10"
                   >
-                    {/* Thematic Thumbnail */}
                     <div className="h-32 bg-slate-900 flex items-center justify-center relative overflow-hidden border-b border-slate-800">
                       <div className="absolute inset-0 bg-[linear-gradient(rgba(234,179,8,0.05)_1px,transparent_1px),linear-gradient(90deg,rgba(234,179,8,0.05)_1px,transparent_1px)] bg-[size:10px_10px]" />
                       <div className="absolute inset-0 bg-gradient-to-t from-black to-transparent z-10" />
@@ -568,7 +777,6 @@ export default function Portfolio() {
                       </div>
                     </div>
 
-                    {/* Content */}
                     <div className="p-4 bg-slate-950">
                       <div className="text-[10px] text-slate-500 font-mono mb-1">{proj.subtitle}</div>
                       <h4 className="text-yellow-400 font-mono text-sm font-bold mb-2 tracking-wider">{proj.title}</h4>
@@ -597,7 +805,6 @@ export default function Portfolio() {
               </div>
             </div>
 
-            {/* Legacy Projects */}
             <div>
               <h3 className="text-slate-500 font-mono mb-6 flex items-center gap-2 border-b border-slate-800 pb-2">
                 <Archive className="w-4 h-4" /> ARCHIVED_SUBROUTINES [PRE-CRISIS]
@@ -607,7 +814,7 @@ export default function Portfolio() {
                   <motion.div 
                     key={idx}
                     whileHover={{ scale: 1.02 }}
-                    className="group bg-slate-950 border border-slate-800 p-4 rounded-sm hover:border-slate-600 transition-colors"
+                    className="group bg-slate-950 border border-slate-800 p-4 rounded-sm hover:border-slate-600 transition-colors z-10"
                   >
                     <div className="flex justify-between items-start mb-2">
                       <div>
@@ -645,7 +852,7 @@ export default function Portfolio() {
                 <motion.div 
                   key={idx}
                   whileHover={{ scale: 1.02 }}
-                  className="bg-black border border-slate-800 p-6 rounded hover:border-yellow-500/50 hover:shadow-[0_0_15px_rgba(234,179,8,0.1)] transition-all group"
+                  className="bg-black border border-slate-800 p-6 rounded hover:border-yellow-500/50 hover:shadow-[0_0_15px_rgba(234,179,8,0.1)] transition-all group z-10"
                 >
                   <h3 className="font-mono text-blue-400 mb-4 text-sm tracking-wider border-b border-blue-500/20 pb-2">
                     {skillGroup.category}
@@ -664,8 +871,7 @@ export default function Portfolio() {
               ))}
             </div>
             
-            {/* Education Micro-Section */}
-            <div className="mt-12 p-6 border border-dashed border-slate-700 rounded bg-slate-900/30 flex flex-col md:flex-row justify-between items-center text-sm text-slate-400 font-mono">
+            <div className="mt-12 p-6 border border-dashed border-slate-700 rounded bg-slate-900/30 flex flex-col md:flex-row justify-between items-center text-sm text-slate-400 font-mono z-10">
               <div className="flex items-center gap-4">
                  <div className="p-2 bg-white/5 rounded">
                    <Code2 className="w-5 h-5 text-yellow-500" />
@@ -682,7 +888,7 @@ export default function Portfolio() {
           </TechSection>
 
           {/* Footer */}
-          <footer className="py-8 text-center border-t border-slate-900 bg-black">
+          <footer className="py-8 text-center border-t border-slate-900 bg-black relative z-10">
              <div className="flex justify-center items-center gap-2 mb-4">
                 <Batarang className="w-6 h-6 text-slate-700" />
              </div>
